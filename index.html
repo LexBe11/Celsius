@@ -60,49 +60,35 @@
             background-color: #e9ecef;
             border-radius: 4px;
         }
-        .typing-area {
-            background-color: #f8f9fa;
-            border: 2px solid #007bff;
-            border-radius: 8px;
-            font-size: 1.2em;
-            padding: 15px;
-            min-height: 150px;
+        .tasks {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #343a40;
+            flex-direction: column;
         }
-        .tasks, .attendance {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-        }
-        .tasks div, .attendance div {
-            flex: 1;
-        }
-        .stats {
-            font-size: 1.1em;
-            margin: 10px 0;
-        }
-        .helper-box {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #fff3cd;
-            border-radius: 4px;
-            border: 1px solid #ffeeba;
-        }
-        .task-item, .attendance-item {
+        .task-item {
             background: #f1f1f1;
             padding: 10px;
             margin: 10px 0;
             border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
-        .task-actions, .attendance-actions {
+        .task-actions {
             display: flex;
             gap: 10px;
+        }
+        .timer {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #d9534f;
+        }
+        .clock-in-btn {
+            margin-top: 20px;
+        }
+        .clock-out-btn {
+            margin-top: 20px;
+            background-color: #d9534f;
+        }
+        .break-btn {
+            margin-top: 20px;
+            background-color: #ffc107;
         }
     </style>
 </head>
@@ -110,178 +96,137 @@
     <header>
         <h1>Celsius - Work Dashboard</h1>
     </header>
+
     <div class="container">
-        <!-- Writing Section -->
-        <div class="section">
-            <h2>Write Your Content</h2>
-            <textarea id="contentInput" rows="6" placeholder="Write your content here..."></textarea>
-            <button onclick="saveContent()">Save Content</button>
-        </div>
-
-        <!-- Typing Test Section -->
-        <div class="section">
-            <h2>Typing Speed Test</h2>
-            <div class="typing-area" id="typingArea">Type the text below when you're ready:</div>
-            <textarea id="typingInput" placeholder="Start typing above text here..." oninput="trackTyping()" disabled></textarea>
-            <button onclick="startTyping()">Start Typing Test</button>
-            <button onclick="finishTyping()">Finish Test</button>
-        </div>
-
         <!-- Task Management Section -->
         <div class="section tasks">
-            <div>
-                <h2>Task Management</h2>
-                <div id="taskList"></div>
-                <button onclick="addTask()">Add Task</button>
+            <h2>Task Categories</h2>
+            <div class="task-item">
+                <h3>LexO Topic: Salary</h3>
+                <button onclick="startTask('Salary')">Start Task: Salary (Robux)</button>
             </div>
-            <div>
-                <h2>Attendance</h2>
-                <div id="attendanceList"></div>
-                <button onclick="markAttendance()">Mark Attendance</button>
+            <div class="task-item">
+                <h3>Typing Test 1</h3>
+                <button onclick="startTypingTest('Typing Test 1')">Start Typing Test</button>
             </div>
-        </div>
-
-        <!-- File Submission Section -->
-        <div class="section">
-            <h2>File Submission</h2>
-            <input type="file" id="fileInput">
-            <button onclick="submitFile()">Submit File</button>
-            <div id="fileOutput"></div>
-        </div>
-
-        <!-- Control Panel Section -->
-        <div class="section">
-            <h2>Control Panel</h2>
-            <div id="savedContent" class="output">
-                <h3>Saved Content:</h3>
-                <p id="savedContentDisplay">No content saved yet.</p>
+            <div class="task-item">
+                <h3>Clock In</h3>
+                <button onclick="clockIn()">Clock In</button>
+            </div>
+            <div class="task-item">
+                <h3>Clock Out</h3>
+                <button class="clock-out-btn" onclick="clockOut()">Clock Out</button>
+            </div>
+            <div class="task-item">
+                <h3>Take Break</h3>
+                <button class="break-btn" onclick="takeBreak()">Take Break</button>
+            </div>
+            <div class="task-item">
+                <h3>View Work Hours</h3>
+                <button onclick="viewWorkHours()">View Work Hours</button>
             </div>
         </div>
 
-        <!-- Helper Section -->
-        <div class="helper-box">
-            <h3>Helper Section</h3>
-            <p>Need assistance with writing? You can find writing tips and guidelines in the section below:</p>
-            <ul>
-                <li>Write clear and concise paragraphs.</li>
-                <li>Ensure to reference your sources correctly.</li>
-                <li>Focus on one main idea per paragraph.</li>
-                <li>Proofread your content before submitting.</li>
-            </ul>
+        <!-- User Activity and Stats -->
+        <div class="section" id="userStats">
+            <h2>User Stats</h2>
+            <p>Site Visits: <span id="siteVisits">0</span></p>
+            <p>Total Work Hours: <span id="totalWorkHours">0</span> hours</p>
+            <p>Total Break Time: <span id="totalBreakTime">0</span> minutes</p>
+            <p>Current Task: <span id="currentTask">None</span></p>
         </div>
+
     </div>
 
     <script>
-        // Writing content and saving it
-        function saveContent() {
-            const contentInput = document.getElementById("contentInput").value.trim();
-            if (!contentInput) {
-                alert("Please write some content before saving.");
+        // Initialize variables and local storage
+        let isClockedIn = false;
+        let breakTimeActive = false;
+        let totalWorkTime = localStorage.getItem('totalWorkTime') || 0; // in minutes
+        let breakTime = localStorage.getItem('breakTime') || 0; // in minutes
+        let siteVisits = parseInt(localStorage.getItem('siteVisits')) || 0;
+        let taskHistory = JSON.parse(localStorage.getItem('taskHistory')) || [];
+        let clockInTime = null;
+        let currentTask = '';
+
+        // Update the stats on page load
+        document.getElementById('siteVisits').textContent = siteVisits;
+        document.getElementById('totalWorkHours').textContent = (totalWorkTime / 60).toFixed(2);
+        document.getElementById('totalBreakTime').textContent = breakTime;
+        document.getElementById('currentTask').textContent = currentTask;
+
+        // Increment site visit counter
+        siteVisits++;
+        localStorage.setItem('siteVisits', siteVisits);
+
+        // Clock In Function
+        function clockIn() {
+            if (isClockedIn) {
+                alert("You are already clocked in.");
                 return;
             }
-            const savedData = {
-                content: contentInput,
-                date: new Date().toLocaleString(),
-            };
-            localStorage.setItem("savedContent", JSON.stringify(savedData));
-            document.getElementById("contentInput").value = "";
-            loadSavedContent();
+            isClockedIn = true;
+            clockInTime = new Date();
+            alert("You are now clocked in.");
         }
 
-        function loadSavedContent() {
-            const savedData = JSON.parse(localStorage.getItem("savedContent"));
-            const savedContentDisplay = document.getElementById("savedContentDisplay");
-            if (savedData) {
-                savedContentDisplay.innerHTML = `
-                    <strong>Saved On:</strong> ${savedData.date} <br>
-                    <strong>Content:</strong><br>
-                    ${savedData.content}
-                `;
+        // Clock Out Function
+        function clockOut() {
+            if (!isClockedIn) {
+                alert("You need to clock in first.");
+                return;
+            }
+            isClockedIn = false;
+            let clockOutTime = new Date();
+            let workedMinutes = Math.round((clockOutTime - clockInTime) / 60000);
+            totalWorkTime += workedMinutes;
+            localStorage.setItem('totalWorkTime', totalWorkTime);
+            alert("You are now clocked out.");
+        }
+
+        // Start Task
+        function startTask(taskName) {
+            currentTask = taskName;
+            localStorage.setItem('currentTask', taskName);
+            document.getElementById('currentTask').textContent = taskName;
+            alert(`Started task: ${taskName}`);
+        }
+
+        // Track Break Time
+        function takeBreak() {
+            if (isClockedIn) {
+                breakTimeActive = true;
+                alert("You are now on break.");
             } else {
-                savedContentDisplay.innerHTML = "No content saved yet.";
+                alert("You need to clock in first.");
             }
         }
 
-        // Typing Test
-        let typingStartTime = 0;
-        let wordsTypedCount = 0;
-        function startTyping() {
-            document.getElementById("typingInput").disabled = false;
-            document.getElementById("typingArea").textContent = "Type the text below when you're ready: The quick brown fox jumps over the lazy dog.";
-            typingStartTime = new Date().getTime();
-            wordsTypedCount = 0;
-        }
-
-        function trackTyping() {
-            const typedText = document.getElementById("typingInput").value.trim();
-            const originalText = document.getElementById("typingArea").textContent;
-            if (typedText === originalText) {
-                calculateTypingSpeed();
-            }
-            wordsTypedCount = typedText.split(' ').length;
-        }
-
-        function calculateTypingSpeed() {
-            const timeElapsed = (new Date().getTime() - typingStartTime) / 1000;
-            const speed = (wordsTypedCount / timeElapsed) * 60;
-            alert(`Your typing speed is: ${Math.round(speed)} WPM`);
-        }
-
-        function finishTyping() {
-            const typingInput = document.getElementById("typingInput");
-            typingInput.disabled = true;
-            calculateTypingSpeed();
-        }
-
-        // Task Management
-        function addTask() {
-            const taskList = document.getElementById("taskList");
-            const taskName = prompt("Enter task name:");
-            if (taskName) {
-                const taskItem = document.createElement("div");
-                taskItem.className = "task-item";
-                taskItem.innerHTML = `${taskName} <div class="task-actions"><button onclick="markTaskComplete(this)">Complete</button><button onclick="deleteTask(this)">Delete</button></div>`;
-                taskList.appendChild(taskItem);
+        // Track Break Time
+        function trackBreakTime() {
+            if (breakTimeActive) {
+                breakTime++;
+                localStorage.setItem('breakTime', breakTime);
+                alert(`Break time: ${breakTime} minutes.`);
+            } else {
+                alert("You need to take a break first.");
             }
         }
 
-        function markTaskComplete(button) {
-            button.closest(".task-item").style.textDecoration = "line-through";
+        // View Work Hours Function
+        function viewWorkHours() {
+            alert(`Total Work Time: ${(totalWorkTime / 60).toFixed(2)} hours`);
         }
 
-        function deleteTask(button) {
-            button.closest(".task-item").remove();
-        }
+        // Local Storage Update and Stats Display
+        window.addEventListener('beforeunload', function() {
+            localStorage.setItem('totalWorkTime', totalWorkTime);
+            localStorage.setItem('breakTime', breakTime);
+            localStorage.setItem('currentTask', currentTask);
+            localStorage.setItem('siteVisits', siteVisits);
+            localStorage.setItem('taskHistory', JSON.stringify(taskHistory));
+        });
 
-        // Attendance Management
-        function markAttendance() {
-            const attendanceList = document.getElementById("attendanceList");
-            const attendanceName = prompt("Enter your name:");
-            if (attendanceName) {
-                const attendanceItem = document.createElement("div");
-                attendanceItem.className = "attendance-item";
-                attendanceItem.innerHTML = `${attendanceName} <div class="attendance-actions"><button onclick="markAttendanceComplete(this)">Complete</button></div>`;
-                attendanceList.appendChild(attendanceItem);
-            }
-        }
-
-        function markAttendanceComplete(button) {
-            button.closest(".attendance-item").style.textDecoration = "line-through";
-        }
-
-        // File submission
-        function submitFile() {
-            const fileInput = document.getElementById("fileInput");
-            const fileOutput = document.getElementById("fileOutput");
-            const file = fileInput.files[0];
-            if (file) {
-                const fileData = `<strong>Submitted File:</strong> ${file.name}`;
-                fileOutput.innerHTML = fileData;
-            }
-        }
-
-        // Load saved content on page load
-        loadSavedContent();
     </script>
 </body>
 </html>
