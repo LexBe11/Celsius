@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celsius - Typing Page & Work Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            margin-top: 0;
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .typing-area {
+            background-color: #f8f9fa;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            font-size: 1.2em;
+            padding: 15px;
+            min-height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #343a40;
+        }
+        .typing-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+        .stats span {
+            margin-right: 15px;
+        }
+        .start-button {
+            background-color: #28a745;
+        }
+        .start-button:hover {
+            background-color: #218838;
+        }
+        .finish-button {
+            background-color: #dc3545;
+        }
+        .finish-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Celsius - Typing Page & Work Dashboard</h1>
+    </header>
+    <div class="container">
+        <!-- Writing Section -->
+        <div class="section">
+            <h2>Write Your Content</h2>
+            <textarea id="contentInput" rows="6" placeholder="Write your content here..."></textarea>
+            <button onclick="saveContent()">Save Content</button>
+        </div>
+
+        <!-- Typing Page Section -->
+        <div class="section">
+            <h2>Typing Speed Test</h2>
+            <div class="typing-container">
+                <div class="typing-area" id="typingArea">Type the text below when you're ready:</div>
+                <div class="stats">
+                    <span id="timeElapsed">Time: 0s</span>
+                    <span id="wordsTyped">Words Typed: 0</span>
+                    <span id="typingSpeed">Speed: 0 WPM</span>
+                </div>
+            </div>
+            <textarea id="typingInput" placeholder="Start typing above text here..." oninput="trackTyping()" disabled></textarea>
+            <button class="start-button" onclick="startTyping()">Start Typing Test</button>
+            <button class="finish-button" onclick="finishTyping()">Finish Test</button>
+        </div>
+
+        <!-- Control Panel Section -->
+        <div class="section">
+            <h2>Control Panel</h2>
+            <div id="savedContent" class="output">
+                <h3>Saved Content:</h3>
+                <p id="savedContentDisplay">No content saved yet.</p>
+            </div>
+        </div>
+
+        <!-- Helper Section -->
+        <div class="helper-box">
+            <h3>Helper Section</h3>
+            <p>Need assistance with writing? You can find writing tips and guidelines in the section below:</p>
+            <ul>
+                <li>Write clear and concise paragraphs.</li>
+                <li>Ensure to reference your sources correctly.</li>
+                <li>Focus on one main idea per paragraph.</li>
+                <li>Proofread your content before submitting.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let typingStartTime = 0;
+        let typingTimer = 0;
+        let wordsTypedCount = 0;
+
+        // Start typing test
+        function startTyping() {
+            document.getElementById("typingInput").disabled = false;
+            document.getElementById("typingArea").textContent = "Type the text below when you're ready: The quick brown fox jumps over the lazy dog.";
+            typingStartTime = new Date().getTime();
+            wordsTypedCount = 0;
+            updateTypingStats();
+        }
+
+        // Track typing progress
+        function trackTyping() {
+            const typedText = document.getElementById("typingInput").value.trim();
+            const originalText = document.getElementById("typingArea").textContent;
+
+            if (typedText === originalText) {
+                clearInterval(typingTimer);
+                calculateTypingSpeed();
+            }
+
+            wordsTypedCount = typedText.split(' ').length;
+            updateTypingStats();
+        }
+
+        // Calculate typing speed
+        function calculateTypingSpeed() {
+            const timeElapsed = (new Date().getTime() - typingStartTime) / 1000; // seconds
+            const speed = (wordsTypedCount / timeElapsed) * 60; // words per minute
+            document.getElementById("typingSpeed").textContent = `Speed: ${Math.round(speed)} WPM`;
+            alert("Test complete! Your typing speed has been calculated.");
+        }
+
+        // Update stats
+        function updateTypingStats() {
+            const timeElapsed = Math.floor((new Date().getTime() - typingStartTime) / 1000);
+            document.getElementById("timeElapsed").textContent = `Time: ${timeElapsed}s`;
+            document.getElementById("wordsTyped").textContent = `Words Typed: ${wordsTypedCount}`;
+        }
+
+        // Finish typing test
+        function finishTyping() {
+            const typingInput = document.getElementById("typingInput");
+            typingInput.disabled = true;
+            clearInterval(typingTimer);
+            calculateTypingSpeed();
+        }
+
+        // Save written content
+        function saveContent() {
+            const contentInput = document.getElementById("contentInput").value.trim();
+
+            if (!contentInput) {
+                alert("Please write some content before saving.");
+                return;
+            }
+
+            const savedData = {
+                content: contentInput,
+                date: new Date().toLocaleString(),
+            };
+
+            // Store content in local storage
+            localStorage.setItem("savedContent", JSON.stringify(savedData));
+
+            // Clear textarea
+            document.getElementById("contentInput").value = "";
+
+            // Update saved content display
+            loadSavedContent();
+        }
+
+        // Load saved content
+        function loadSavedContent() {
+            const savedData = JSON.parse(localStorage.getItem("savedContent"));
+            const savedContentDisplay = document.getElementById("savedContentDisplay");
+
+            if (savedData) {
+                savedContentDisplay.innerHTML = `
+                    <strong>Saved On:</strong> ${savedData.date} <br>
+                    <strong>Content:</strong><br>
+                    ${savedData.content}
+                `;
+            } else {
+                savedContentDisplay.innerHTML = "No content saved yet.";
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener("DOMContentLoaded", loadSavedContent);
+    </script>
+</body>
+</html>
