@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Celsius - Work Dashboard</title>
+    <title>LexO Inc. - Typing Paperwork</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
         }
         header {
             background-color: #343a40;
@@ -20,21 +20,21 @@
         }
         .container {
             padding: 20px;
-            max-width: 1200px;
+            max-width: 800px;
             margin: auto;
         }
-        .section {
-            margin: 20px 0;
+        .paperwork-area {
+            background: #fff;
             padding: 20px;
-            background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         h2 {
             margin-top: 0;
         }
-        textarea, input[type="text"], input[type="file"], select {
+        textarea {
             width: 100%;
+            height: 200px;
             padding: 15px;
             margin: 10px 0;
             border: 1px solid #ccc;
@@ -60,198 +60,68 @@
             background-color: #e9ecef;
             border-radius: 4px;
         }
-        .tasks {
-            display: flex;
-            flex-direction: column;
-        }
-        .task-item {
-            background: #f1f1f1;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 6px;
-        }
-        .task-actions {
-            display: flex;
-            gap: 10px;
-        }
-        .typing-test-area {
-            display: none;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .timer {
-            font-size: 1.2em;
-            margin-bottom: 15px;
-            color: #d9534f;
-        }
-        .clock-in-btn {
-            margin-top: 20px;
-        }
-        .clock-out-btn {
-            margin-top: 20px;
-            background-color: #d9534f;
-        }
-        .break-btn {
-            margin-top: 20px;
-            background-color: #ffc107;
+        .warning {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Celsius - Work Dashboard</h1>
+        <h1>LexO Inc. - Typing Paperwork</h1>
     </header>
 
     <div class="container">
-        <!-- Task Management Section -->
-        <div class="section tasks">
-            <h2>Task Categories</h2>
-            <div class="task-item">
-                <h3>LexO Topic: Salary</h3>
-                <button onclick="startTask('Salary')">Start Task: Salary (Robux)</button>
+        <div class="paperwork-area">
+            <div id="warningMessage" class="warning" style="display: none;">
+                Paperwork must be over 450 characters. The minimum is 1200 characters. Keep going!
             </div>
-            <div class="task-item">
-                <h3>Typing Test 1</h3>
-                <button onclick="startTypingTest('Typing Test 1')">Start Typing Test</button>
-            </div>
-            <div class="task-item">
-                <h3>Clock In</h3>
-                <button onclick="clockIn()">Clock In</button>
-            </div>
-            <div class="task-item">
-                <h3>Clock Out</h3>
-                <button class="clock-out-btn" onclick="clockOut()">Clock Out</button>
-            </div>
-            <div class="task-item">
-                <h3>Take Break</h3>
-                <button class="break-btn" onclick="takeBreak()">Take Break</button>
-            </div>
-            <div class="task-item">
-                <h3>View Work Hours</h3>
-                <button onclick="viewWorkHours()">View Work Hours</button>
-            </div>
-        </div>
+            <h2>Typing Paperwork</h2>
+            <p>Please type the content below and submit when finished. Make sure your content is at least 1200 characters long.</p>
+            <textarea id="paperworkInput" placeholder="Type your content here..." oninput="checkCharacterCount()"></textarea>
+            <button onclick="submitPaperwork()">Submit Paperwork</button>
 
-        <!-- Typing Test Section -->
-        <div class="typing-test-area" id="typingTestArea">
-            <h2>Typing Test: Salary Task (Robux)</h2>
-            <textarea id="typingInput" rows="6" placeholder="Type the following text here..."></textarea>
-            <div class="timer" id="typingTimer">Time: 0:00</div>
-            <button onclick="submitTypingTest()">Submit Test</button>
-        </div>
-
-        <!-- User Activity and Stats -->
-        <div class="section" id="userStats">
-            <h2>User Stats</h2>
-            <p>Site Visits: <span id="siteVisits">0</span></p>
-            <p>Total Work Hours: <span id="totalWorkHours">0</span> hours</p>
-            <p>Total Break Time: <span id="totalBreakTime">0</span> minutes</p>
-            <p>Current Task: <span id="currentTask">None</span></p>
+            <div id="submissionStatus" class="output" style="display: none;">
+                <h3>Your Submission:</h3>
+                <p id="submittedText"></p>
+            </div>
         </div>
     </div>
 
     <script>
-        // Initialize variables and local storage
-        let isClockedIn = false;
-        let breakTimeActive = false;
-        let totalWorkTime = localStorage.getItem('totalWorkTime') || 0; // in minutes
-        let breakTime = localStorage.getItem('breakTime') || 0; // in minutes
-        let siteVisits = parseInt(localStorage.getItem('siteVisits')) || 0;
-        let taskHistory = JSON.parse(localStorage.getItem('taskHistory')) || [];
-        let clockInTime = null;
-        let currentTask = '';
-        let typingStartTime = null;
-        let typingTime = 0;
-        let typingInterval;
+        // Function to check the character count and display the warning
+        function checkCharacterCount() {
+            const paperworkContent = document.getElementById('paperworkInput').value;
+            const warningMessage = document.getElementById('warningMessage');
 
-        // Update the stats on page load
-        document.getElementById('siteVisits').textContent = siteVisits;
-        document.getElementById('totalWorkHours').textContent = (totalWorkTime / 60).toFixed(2);
-        document.getElementById('totalBreakTime').textContent = breakTime;
-        document.getElementById('currentTask').textContent = currentTask;
+            // Show warning if content is too short
+            if (paperworkContent.length < 1200) {
+                warningMessage.style.display = 'block';
+            } else {
+                warningMessage.style.display = 'none';
+            }
+        }
 
-        // Increment site visit counter
-        siteVisits++;
-        localStorage.setItem('siteVisits', siteVisits);
+        // Function to handle paperwork submission
+        function submitPaperwork() {
+            const paperworkContent = document.getElementById('paperworkInput').value;
 
-        // Clock In Function
-        function clockIn() {
-            if (isClockedIn) {
-                alert("You are already clocked in.");
+            // Check if the content meets the minimum character requirement
+            if (paperworkContent.length < 1200) {
+                alert('Paperwork must be at least 1200 characters. Please keep typing!');
                 return;
             }
-            isClockedIn = true;
-            clockInTime = new Date();
-            alert("You are now clocked in.");
-        }
 
-        // Clock Out Function
-        function clockOut() {
-            if (!isClockedIn) {
-                alert("You need to clock in first.");
-                return;
-            }
-            isClockedIn = false;
-            let clockOutTime = new Date();
-            let workedMinutes = Math.round((clockOutTime - clockInTime) / 60000);
-            totalWorkTime += workedMinutes;
-            localStorage.setItem('totalWorkTime', totalWorkTime);
-            alert("You are now clocked out.");
-        }
+            // Store the typed content in localStorage
+            localStorage.setItem('submittedPaperwork', paperworkContent);
 
-        // Start Task
-        function startTask(taskName) {
-            currentTask = taskName;
-            localStorage.setItem('currentTask', taskName);
-            document.getElementById('currentTask').textContent = taskName;
-            alert(`Started task: ${taskName}`);
-        }
+            // Show the submitted content and confirmation
+            document.getElementById('submittedText').textContent = paperworkContent;
+            document.getElementById('submissionStatus').style.display = 'block';
 
-        // Start Typing Test
-        function startTypingTest(taskName) {
-            currentTask = taskName;
-            document.getElementById('currentTask').textContent = taskName;
-            document.getElementById('typingTestArea').style.display = 'block';
-            typingStartTime = new Date();
-            typingTime = 0;
-
-            typingInterval = setInterval(function () {
-                let elapsedTime = Math.round((new Date() - typingStartTime) / 1000); // seconds
-                typingTime = elapsedTime;
-                let minutes = Math.floor(elapsedTime / 60);
-                let seconds = elapsedTime % 60;
-                document.getElementById('typingTimer').textContent = `Time: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            }, 1000);
-        }
-
-        // Submit Typing Test
-        function submitTypingTest() {
-            clearInterval(typingInterval);
-            let typedText = document.getElementById('typingInput').value;
-            taskHistory.push({ task: currentTask, timeTaken: typingTime, text: typedText, status: 'Pending' });
-            localStorage.setItem('taskHistory', JSON.stringify(taskHistory));
-            alert("Typing test submitted.");
-            document.getElementById('typingTestArea').style.display = 'none';
-        }
-
-        // View Work Hours
-        function viewWorkHours() {
-            alert(`You have worked ${totalWorkTime / 60} hours.`);
-        }
-
-        // Take Break
-        function takeBreak() {
-            if (breakTimeActive) {
-                alert("You are already on a break.");
-                return;
-            }
-            breakTimeActive = true;
-            setTimeout(() => {
-                breakTimeActive = false;
-                alert("Your break is over!");
-            }, 10000); // 10 seconds for demo purposes
+            // Clear the input field
+            document.getElementById('paperworkInput').value = '';
         }
     </script>
 </body>
