@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Celsius - Typing Page & Work Dashboard</title>
+    <title>Celsius - Work Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,7 +33,7 @@
         h2 {
             margin-top: 0;
         }
-        textarea, input[type="text"] {
+        textarea, input[type="text"], input[type="file"], select {
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -72,35 +72,43 @@
             align-items: center;
             color: #343a40;
         }
-        .typing-container {
+        .tasks, .attendance {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            gap: 20px;
+        }
+        .tasks div, .attendance div {
+            flex: 1;
         }
         .stats {
             font-size: 1.1em;
             margin: 10px 0;
         }
-        .stats span {
-            margin-right: 15px;
+        .helper-box {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff3cd;
+            border-radius: 4px;
+            border: 1px solid #ffeeba;
         }
-        .start-button {
-            background-color: #28a745;
+        .task-item, .attendance-item {
+            background: #f1f1f1;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .start-button:hover {
-            background-color: #218838;
-        }
-        .finish-button {
-            background-color: #dc3545;
-        }
-        .finish-button:hover {
-            background-color: #c82333;
+        .task-actions, .attendance-actions {
+            display: flex;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Celsius - Typing Page & Work Dashboard</h1>
+        <h1>Celsius - Work Dashboard</h1>
     </header>
     <div class="container">
         <!-- Writing Section -->
@@ -110,20 +118,35 @@
             <button onclick="saveContent()">Save Content</button>
         </div>
 
-        <!-- Typing Page Section -->
+        <!-- Typing Test Section -->
         <div class="section">
             <h2>Typing Speed Test</h2>
-            <div class="typing-container">
-                <div class="typing-area" id="typingArea">Type the text below when you're ready:</div>
-                <div class="stats">
-                    <span id="timeElapsed">Time: 0s</span>
-                    <span id="wordsTyped">Words Typed: 0</span>
-                    <span id="typingSpeed">Speed: 0 WPM</span>
-                </div>
-            </div>
+            <div class="typing-area" id="typingArea">Type the text below when you're ready:</div>
             <textarea id="typingInput" placeholder="Start typing above text here..." oninput="trackTyping()" disabled></textarea>
-            <button class="start-button" onclick="startTyping()">Start Typing Test</button>
-            <button class="finish-button" onclick="finishTyping()">Finish Test</button>
+            <button onclick="startTyping()">Start Typing Test</button>
+            <button onclick="finishTyping()">Finish Test</button>
+        </div>
+
+        <!-- Task Management Section -->
+        <div class="section tasks">
+            <div>
+                <h2>Task Management</h2>
+                <div id="taskList"></div>
+                <button onclick="addTask()">Add Task</button>
+            </div>
+            <div>
+                <h2>Attendance</h2>
+                <div id="attendanceList"></div>
+                <button onclick="markAttendance()">Mark Attendance</button>
+            </div>
+        </div>
+
+        <!-- File Submission Section -->
+        <div class="section">
+            <h2>File Submission</h2>
+            <input type="file" id="fileInput">
+            <button onclick="submitFile()">Submit File</button>
+            <div id="fileOutput"></div>
         </div>
 
         <!-- Control Panel Section -->
@@ -149,85 +172,25 @@
     </div>
 
     <script>
-        let typingStartTime = 0;
-        let typingTimer = 0;
-        let wordsTypedCount = 0;
-
-        // Start typing test
-        function startTyping() {
-            document.getElementById("typingInput").disabled = false;
-            document.getElementById("typingArea").textContent = "Type the text below when you're ready: The quick brown fox jumps over the lazy dog.";
-            typingStartTime = new Date().getTime();
-            wordsTypedCount = 0;
-            updateTypingStats();
-        }
-
-        // Track typing progress
-        function trackTyping() {
-            const typedText = document.getElementById("typingInput").value.trim();
-            const originalText = document.getElementById("typingArea").textContent;
-
-            if (typedText === originalText) {
-                clearInterval(typingTimer);
-                calculateTypingSpeed();
-            }
-
-            wordsTypedCount = typedText.split(' ').length;
-            updateTypingStats();
-        }
-
-        // Calculate typing speed
-        function calculateTypingSpeed() {
-            const timeElapsed = (new Date().getTime() - typingStartTime) / 1000; // seconds
-            const speed = (wordsTypedCount / timeElapsed) * 60; // words per minute
-            document.getElementById("typingSpeed").textContent = `Speed: ${Math.round(speed)} WPM`;
-            alert("Test complete! Your typing speed has been calculated.");
-        }
-
-        // Update stats
-        function updateTypingStats() {
-            const timeElapsed = Math.floor((new Date().getTime() - typingStartTime) / 1000);
-            document.getElementById("timeElapsed").textContent = `Time: ${timeElapsed}s`;
-            document.getElementById("wordsTyped").textContent = `Words Typed: ${wordsTypedCount}`;
-        }
-
-        // Finish typing test
-        function finishTyping() {
-            const typingInput = document.getElementById("typingInput");
-            typingInput.disabled = true;
-            clearInterval(typingTimer);
-            calculateTypingSpeed();
-        }
-
-        // Save written content
+        // Writing content and saving it
         function saveContent() {
             const contentInput = document.getElementById("contentInput").value.trim();
-
             if (!contentInput) {
                 alert("Please write some content before saving.");
                 return;
             }
-
             const savedData = {
                 content: contentInput,
                 date: new Date().toLocaleString(),
             };
-
-            // Store content in local storage
             localStorage.setItem("savedContent", JSON.stringify(savedData));
-
-            // Clear textarea
             document.getElementById("contentInput").value = "";
-
-            // Update saved content display
             loadSavedContent();
         }
 
-        // Load saved content
         function loadSavedContent() {
             const savedData = JSON.parse(localStorage.getItem("savedContent"));
             const savedContentDisplay = document.getElementById("savedContentDisplay");
-
             if (savedData) {
                 savedContentDisplay.innerHTML = `
                     <strong>Saved On:</strong> ${savedData.date} <br>
@@ -239,8 +202,86 @@
             }
         }
 
-        // Initialize on page load
-        document.addEventListener("DOMContentLoaded", loadSavedContent);
+        // Typing Test
+        let typingStartTime = 0;
+        let wordsTypedCount = 0;
+        function startTyping() {
+            document.getElementById("typingInput").disabled = false;
+            document.getElementById("typingArea").textContent = "Type the text below when you're ready: The quick brown fox jumps over the lazy dog.";
+            typingStartTime = new Date().getTime();
+            wordsTypedCount = 0;
+        }
+
+        function trackTyping() {
+            const typedText = document.getElementById("typingInput").value.trim();
+            const originalText = document.getElementById("typingArea").textContent;
+            if (typedText === originalText) {
+                calculateTypingSpeed();
+            }
+            wordsTypedCount = typedText.split(' ').length;
+        }
+
+        function calculateTypingSpeed() {
+            const timeElapsed = (new Date().getTime() - typingStartTime) / 1000;
+            const speed = (wordsTypedCount / timeElapsed) * 60;
+            alert(`Your typing speed is: ${Math.round(speed)} WPM`);
+        }
+
+        function finishTyping() {
+            const typingInput = document.getElementById("typingInput");
+            typingInput.disabled = true;
+            calculateTypingSpeed();
+        }
+
+        // Task Management
+        function addTask() {
+            const taskList = document.getElementById("taskList");
+            const taskName = prompt("Enter task name:");
+            if (taskName) {
+                const taskItem = document.createElement("div");
+                taskItem.className = "task-item";
+                taskItem.innerHTML = `${taskName} <div class="task-actions"><button onclick="markTaskComplete(this)">Complete</button><button onclick="deleteTask(this)">Delete</button></div>`;
+                taskList.appendChild(taskItem);
+            }
+        }
+
+        function markTaskComplete(button) {
+            button.closest(".task-item").style.textDecoration = "line-through";
+        }
+
+        function deleteTask(button) {
+            button.closest(".task-item").remove();
+        }
+
+        // Attendance Management
+        function markAttendance() {
+            const attendanceList = document.getElementById("attendanceList");
+            const attendanceName = prompt("Enter your name:");
+            if (attendanceName) {
+                const attendanceItem = document.createElement("div");
+                attendanceItem.className = "attendance-item";
+                attendanceItem.innerHTML = `${attendanceName} <div class="attendance-actions"><button onclick="markAttendanceComplete(this)">Complete</button></div>`;
+                attendanceList.appendChild(attendanceItem);
+            }
+        }
+
+        function markAttendanceComplete(button) {
+            button.closest(".attendance-item").style.textDecoration = "line-through";
+        }
+
+        // File submission
+        function submitFile() {
+            const fileInput = document.getElementById("fileInput");
+            const fileOutput = document.getElementById("fileOutput");
+            const file = fileInput.files[0];
+            if (file) {
+                const fileData = `<strong>Submitted File:</strong> ${file.name}`;
+                fileOutput.innerHTML = fileData;
+            }
+        }
+
+        // Load saved content on page load
+        loadSavedContent();
     </script>
 </body>
 </html>
