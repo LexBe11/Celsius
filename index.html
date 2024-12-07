@@ -45,7 +45,7 @@
             margin: 15px 0;
         }
 
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], textarea {
             padding: 10px;
             width: 100%;
             border-radius: 5px;
@@ -156,11 +156,21 @@
             <button class="btn" onclick="login()">Login</button>
         </div>
 
+        <!-- Typing Page Section -->
+        <div id="typing-page" style="display:none;" class="card">
+            <h2 class="header">Typing Page</h2>
+            <textarea id="typing-text" rows="10" placeholder="Type here..." style="width: 100%;"></textarea>
+            <p id="char-count" class="error">Minimum 1200 characters required.</p>
+            <button id="submit-btn" class="btn" onclick="submitTypingPage()">Submit</button>
+        </div>
+
         <!-- Clock In/Out Section -->
         <div id="clock-section" style="display:none;" class="card">
             <h2 id="user-greeting"></h2>
+            <p id="current-time"></p>
             <button id="clock-in-btn" class="arrow-btn logged-out" onclick="clockIn()">&#x2191; Clock In</button>
             <button id="clock-out-btn" class="arrow-btn logged-in" onclick="clockOut()" style="display:none;">&#x2193; Clock Out</button>
+            <button id="logout-btn" class="btn" onclick="logout()">Log Out</button>
         </div>
 
         <!-- Admin Panel -->
@@ -193,10 +203,7 @@
             if (user) {
                 loggedInUser = user;
                 document.getElementById('login-section').style.display = 'none';
-                document.getElementById('clock-section').style.display = 'block';
-                document.getElementById('user-greeting').innerText = `Hello, ${loggedInUser}!`;
-                updateClockButtons();
-                checkAdminStatus();
+                document.getElementById('typing-page').style.display = 'block';
             }
         }
 
@@ -211,27 +218,21 @@
                 localStorage.setItem('user', loggedInUser);
                 errorMessage.innerText = '';
                 document.getElementById('login-section').style.display = 'none';
-                document.getElementById('clock-section').style.display = 'block';
-                document.getElementById('user-greeting').innerText = `Hello, ${loggedInUser}!`;
-                updateClockButtons();
-                checkAdminStatus();
+                document.getElementById('typing-page').style.display = 'block';
             } else {
                 errorMessage.innerText = 'Invalid username or password';
             }
         }
 
-        // Update Clock Buttons (Clock In/Out)
-        function updateClockButtons() {
-            const clockStatus = localStorage.getItem(loggedInUser);
-            const clockInButton = document.getElementById('clock-in-btn');
-            const clockOutButton = document.getElementById('clock-out-btn');
-
-            if (clockStatus === 'in') {
-                clockInButton.style.display = 'none';
-                clockOutButton.style.display = 'block';
+        // Submit Typing Page
+        function submitTypingPage() {
+            const text = document.getElementById('typing-text').value;
+            if (text.length >= 1200) {
+                // Redirect to Clock In/Out page and show current time
+                localStorage.setItem('typing-page-completed', true);
+                window.location.href = 'clock-in-out.html'; // Redirect to the clock-in page with the local time
             } else {
-                clockInButton.style.display = 'block';
-                clockOutButton.style.display = 'none';
+                document.getElementById('char-count').innerText = 'Minimum 1200 characters required.';
             }
         }
 
@@ -247,20 +248,42 @@
             updateClockButtons();
         }
 
-        // Check if the logged-in user is an Admin
-        function checkAdminStatus() {
-            if (loggedInUser === 'The CEO' || loggedInUser === 'LexBOCEO') {
-                isAdmin = true;
-                document.getElementById('admin-section').style.display = 'block';
+        // Log Out Function
+        function logout() {
+            localStorage.removeItem('user');
+            loggedInUser = null;
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('clock-section').style.display = 'none';
+        }
+
+        // Update Clock In/Out Buttons
+        function updateClockButtons() {
+            if (localStorage.getItem(loggedInUser) === 'in') {
+                document.getElementById('clock-in-btn').style.display = 'none';
+                document.getElementById('clock-out-btn').style.display = 'block';
+                document.getElementById('user-greeting').innerText = `Welcome, ${loggedInUser}!`;
+            } else {
+                document.getElementById('clock-in-btn').style.display = 'block';
+                document.getElementById('clock-out-btn').style.display = 'none';
+                document.getElementById('user-greeting').innerText = `Goodbye, ${loggedInUser}!`;
             }
         }
 
-        // Admin View Clock Status
+        // Admin Password Verification
+        function checkAdminPassword() {
+            const enteredPassword = document.getElementById('admin-password').value;
+            if (enteredPassword === 'Admin123') {
+                viewClockStatus();
+            } else {
+                alert('Incorrect admin password.');
+            }
+        }
+
+        // View Clocked-In Users
         function viewClockStatus() {
             const clockedInUsers = [];
-            for (let user in users) {
-                const status = localStorage.getItem(user);
-                if (status === 'in') {
+            for (const user in users) {
+                if (localStorage.getItem(user) === 'in') {
                     clockedInUsers.push(user);
                 }
             }
@@ -268,31 +291,27 @@
             const clockedInList = document.getElementById('clocked-in-users');
             clockedInList.innerHTML = '';
             clockedInUsers.forEach(user => {
-                const listItem = document.createElement('li');
-                listItem.classList.add('active');
-                listItem.innerText = user;
-                clockedInList.appendChild(listItem);
+                const li = document.createElement('li');
+                li.classList.add('active');
+                li.textContent = user;
+                clockedInList.appendChild(li);
             });
+
+            document.getElementById('clock-status').style.display = 'block';
         }
 
-        // Check Admin Password and display Admin Panel
-        function checkAdminPassword() {
-            const adminPassword = document.getElementById('admin-password').value;
-            if (adminPassword === 'CEO2024') {
-                document.getElementById('clock-status').style.display = 'block';
-                viewClockStatus();
-            } else {
-                alert('Incorrect Admin Password');
-            }
+        // Display Current Time based on Time Zone
+        function showCurrentTime() {
+            const currentTime = new Date();
+            const timeZoneOffset = currentTime.getTimezoneOffset() * 60000;
+            const localTime = new Date(currentTime.getTime() - timeZoneOffset);
+            document.getElementById('current-time').innerText = `Current Time: ${localTime.toLocaleString()}`;
         }
 
-        // On page load, check if the user is logged in and load the status
-        window.onload = function() {
-            checkUserStatus();
-        };
+        checkUserStatus();
+        showCurrentTime();
+
     </script>
 
 </body>
 </html>
-
-
