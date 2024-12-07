@@ -3,210 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexO Inc. - Work Management System</title>
+    <title>Celsius. Clock In/Out System</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
             color: #333;
         }
-        header {
-            background-color: #343a40;
+
+        /* Navbar Styling */
+        .navbar {
+            background-color: #2d3e50;
             color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Container for the Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Card Layouts for Sections */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
             padding: 20px;
             text-align: center;
-            font-size: 1.8em;
         }
-        .container {
-            padding: 20px;
-            max-width: 1200px;
-            margin: auto;
+
+        /* Login Form */
+        .form-group {
+            margin: 15px 0;
         }
-        .panel {
-            background: #fff;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        h2, h3 {
-            margin-top: 0;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 5px;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-        input, textarea, button {
-            width: 100%;
+
+        input[type="text"], input[type="password"] {
             padding: 10px;
-            margin-bottom: 10px;
+            width: 100%;
+            border-radius: 5px;
             border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1em;
+            font-size: 16px;
         }
-        button {
-            background-color: #007bff;
+
+        .btn {
+            padding: 12px 20px;
+            background-color: #4CAF50;
             color: white;
             border: none;
+            border-radius: 5px;
+            font-size: 16px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
-        button:hover {
-            background-color: #0056b3;
+
+        .btn:hover {
+            background-color: #45a049;
         }
-        .hidden {
+
+        .arrow-btn {
+            font-size: 30px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 15px;
+            margin: 20px;
+            transition: transform 0.3s;
+        }
+
+        .arrow-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .logged-in { color: green; }
+        .logged-out { color: red; }
+
+        /* Admin Panel Styling */
+        .admin-container {
             display: none;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
+        .admin-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .status-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .status-list li {
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #eef1f6;
+            border-radius: 5px;
+        }
+
+        .status-list li.active {
+            background-color: #d4edda;
+        }
+
+        /* Error Messages */
+        .error {
+            color: red;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Miscellaneous */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
     </style>
 </head>
 <body>
-    <header>
-        LexO Inc. - Work Management System
-    </header>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        LexO Inc. Employee Portal
+    </div>
 
     <div class="container">
-        <!-- Login Panel -->
-        <div id="loginPanel" class="panel">
-            <h2>Login</h2>
-            <div>
-                <label for="username">Username:</label>
-                <input type="text" id="username" placeholder="Enter your username">
+        <!-- Main Section: Clock In/Out -->
+        <div id="login-section" class="card">
+            <h2 class="header">Login to LexO Inc. Portal</h2>
+            <p id="error-message" class="error"></p>
+
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username" />
             </div>
-            <div>
-                <label for="password">Password:</label>
-                <input type="password" id="password" placeholder="Enter your password">
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password" />
             </div>
-            <button onclick="handleLogin()">Login</button>
-            <p id="loginError" class="hidden" style="color: red; font-weight: bold;">Invalid credentials. Please try again.</p>
+            <button class="btn" onclick="login()">Login</button>
         </div>
 
-        <!-- User Panel -->
-        <div id="userPanel" class="panel hidden">
-            <h2>Welcome, <span id="currentUser"></span>!</h2>
-            <button onclick="openTypingArea()">Start Typing Task</button>
-            <button onclick="openDocumentMaker()">Create Document</button>
-            <button onclick="viewSavedData()">View Saved Work</button>
+        <!-- Clock In/Out Section -->
+        <div id="clock-section" style="display:none;" class="card">
+            <h2 id="user-greeting"></h2>
+            <button id="clock-in-btn" class="arrow-btn logged-out" onclick="clockIn()">&#x2191; Clock In</button>
+            <button id="clock-out-btn" class="arrow-btn logged-in" onclick="clockOut()" style="display:none;">&#x2193; Clock Out</button>
         </div>
 
-        <!-- Typing Area -->
-        <div id="typingArea" class="panel hidden">
-            <h2>Typing Task</h2>
-            <p>Complete your typing work below. The minimum character limit is 450, and the recommended is 1200.</p>
-            <textarea id="typingContent" rows="10" placeholder="Start typing..."></textarea>
-            <p id="typingWarning" class="hidden" style="color: red; font-weight: bold;">Your work must be at least 450 characters to submit!</p>
-            <button onclick="submitTypingTask()">Submit</button>
-        </div>
+        <!-- Admin Panel -->
+        <div id="admin-section" class="admin-container">
+            <h2 class="header">Admin Panel</h2>
+            <input type="password" id="admin-password" class="admin-input" placeholder="Enter Admin Password" />
+            <button class="btn" onclick="checkAdminPassword()">Access Admin Panel</button>
 
-        <!-- Document Maker -->
-        <div id="documentMaker" class="panel hidden">
-            <h2>Document Maker</h2>
-            <div>
-                <label for="documentTitle">Document Title:</label>
-                <input type="text" id="documentTitle" placeholder="Enter document title">
+            <div id="clock-status" class="card" style="display:none;">
+                <h3 class="header">Clocked In Users:</h3>
+                <ul id="clocked-in-users" class="status-list"></ul>
             </div>
-            <div>
-                <label for="documentContent">Content:</label>
-                <textarea id="documentContent" rows="10" placeholder="Type your document here..."></textarea>
-            </div>
-            <button onclick="saveDocument()">Save Document</button>
-        </div>
-
-        <!-- Saved Data Viewer -->
-        <div id="savedDataPanel" class="panel hidden">
-            <h2>Saved Work</h2>
-            <div id="savedWorkList"></div>
         </div>
     </div>
 
     <script>
         const users = {
-            "IanZLexO": "LexO2024Ian",
-            "LexBOCEO": "LexOCEO2024",
-            "MaxFLexO": "MaxLexO2024",
-            "TheCEO": "LexOCEO2024"
+            'IanZLexO': 'LexO2024Ian',
+            'The CEO': 'LexOCEO2024',
+            'LexBOCEO': 'LexOCEO2024',
+            'MaxFLexO': 'MaxLexO2024'
         };
 
-        let currentUser = null;
+        let loggedInUser = null;
+        let isAdmin = false;
 
-        function handleLogin() {
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
+        // Check if the user is already logged in (in localStorage)
+        function checkUserStatus() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                loggedInUser = user;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('clock-section').style.display = 'block';
+                document.getElementById('user-greeting').innerText = `Hello, ${loggedInUser}!`;
+                updateClockButtons();
+                checkAdminStatus();
+            }
+        }
 
+        // Login Function
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            
             if (users[username] === password) {
-                currentUser = username;
-                document.getElementById("loginPanel").classList.add("hidden");
-                document.getElementById("userPanel").classList.remove("hidden");
-                document.getElementById("currentUser").textContent = username;
+                loggedInUser = username;
+                localStorage.setItem('user', loggedInUser);
+                errorMessage.innerText = '';
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('clock-section').style.display = 'block';
+                document.getElementById('user-greeting').innerText = `Hello, ${loggedInUser}!`;
+                updateClockButtons();
+                checkAdminStatus();
             } else {
-                document.getElementById("loginError").classList.remove("hidden");
+                errorMessage.innerText = 'Invalid username or password';
             }
         }
 
-        function openTypingArea() {
-            document.getElementById("userPanel").classList.add("hidden");
-            document.getElementById("typingArea").classList.remove("hidden");
-        }
+        // Update Clock Buttons (Clock In/Out)
+        function updateClockButtons() {
+            const clockStatus = localStorage.getItem(loggedInUser);
+            const clockInButton = document.getElementById('clock-in-btn');
+            const clockOutButton = document.getElementById('clock-out-btn');
 
-        function submitTypingTask() {
-            const content = document.getElementById("typingContent").value;
-
-            if (content.length < 450) {
-                document.getElementById("typingWarning").classList.remove("hidden");
+            if (clockStatus === 'in') {
+                clockInButton.style.display = 'none';
+                clockOutButton.style.display = 'block';
             } else {
-                document.getElementById("typingWarning").classList.add("hidden");
-                saveToLocalStorage("typingTask", content);
-                alert("Typing task submitted successfully!");
-                document.getElementById("typingContent").value = "";
+                clockInButton.style.display = 'block';
+                clockOutButton.style.display = 'none';
             }
         }
 
-        function openDocumentMaker() {
-            document.getElementById("userPanel").classList.add("hidden");
-            document.getElementById("documentMaker").classList.remove("hidden");
+        // Clock In
+        function clockIn() {
+            localStorage.setItem(loggedInUser, 'in');
+            updateClockButtons();
         }
 
-        function saveDocument() {
-            const title = document.getElementById("documentTitle").value;
-            const content = document.getElementById("documentContent").value;
+        // Clock Out
+        function clockOut() {
+            localStorage.setItem(loggedInUser, 'out');
+            updateClockButtons();
+        }
 
-            if (title && content) {
-                saveToLocalStorage(title, content);
-                alert("Document saved successfully!");
-                document.getElementById("documentTitle").value = "";
-                document.getElementById("documentContent").value = "";
-            } else {
-                alert("Please complete both title and content!");
+        // Check if the logged-in user is an Admin
+        function checkAdminStatus() {
+            if (loggedInUser === 'The CEO' || loggedInUser === 'LexBOCEO') {
+                isAdmin = true;
+                document.getElementById('admin-section').style.display = 'block';
             }
         }
 
-        function viewSavedData() {
-            document.getElementById("userPanel").classList.add("hidden");
-            document.getElementById("savedDataPanel").classList.remove("hidden");
-            displaySavedWork();
+        // Admin View Clock Status
+        function viewClockStatus() {
+            const clockedInUsers = [];
+            for (let user in users) {
+                const status = localStorage.getItem(user);
+                if (status === 'in') {
+                    clockedInUsers.push(user);
+                }
+            }
+
+            const clockedInList = document.getElementById('clocked-in-users');
+            clockedInList.innerHTML = '';
+            clockedInUsers.forEach(user => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('active');
+                listItem.innerText = user;
+                clockedInList.appendChild(listItem);
+            });
         }
 
-        function saveToLocalStorage(key, value) {
-            const data = JSON.parse(localStorage.getItem("workData")) || {};
-            data[key] = value;
-            localStorage.setItem("workData", JSON.stringify(data));
+        // Check Admin Password and display Admin Panel
+        function checkAdminPassword() {
+            const adminPassword = document.getElementById('admin-password').value;
+            if (adminPassword === 'CEO2024') {
+                document.getElementById('clock-status').style.display = 'block';
+                viewClockStatus();
+            } else {
+                alert('Incorrect Admin Password');
+            }
         }
 
-        function displaySavedWork() {
-            const data = JSON.parse(localStorage.getItem("workData")) || {};
-            const savedWorkList = document.getElementById("savedWorkList");
-
-            savedWorkList.innerHTML = Object.keys(data).map(key => `
-                <div>
-                    <strong>${key}</strong>
-                    <p>${data[key]}</p>
-                </div>
-            `).join('');
-        }
+        // On page load, check if the user is logged in and load the status
+        window.onload = function() {
+            checkUserStatus();
+        };
     </script>
+
 </body>
 </html>
+
 
