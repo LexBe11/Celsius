@@ -64,44 +64,26 @@
             background-color: #45a049;
         }
 
-        .arrow-btn {
-            font-size: 30px;
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 15px;
-            margin: 20px;
-            transition: transform 0.3s;
-        }
-
-        .arrow-btn:hover {
-            transform: scale(1.2);
-        }
-
-        .logged-in { color: green; }
-        .logged-out { color: red; }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
         .error {
             color: red;
             font-size: 16px;
             font-weight: bold;
         }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
     <div class="navbar">
         Celsius, LexO Inc. Employee Portal
     </div>
 
     <div class="container">
-        <!-- Main Section: Clock In/Out -->
+        <!-- Login Section -->
         <div id="login-section" class="card">
             <h2 class="header">Login to LexO Inc. Portal</h2>
             <p id="error-message" class="error"></p>
@@ -115,21 +97,12 @@
             <button class="btn" onclick="login()">Login</button>
         </div>
 
-        <!-- Typing Page Section -->
+        <!-- Typing Page -->
         <div id="typing-page" style="display:none;" class="card">
             <h2 class="header">Typing Page</h2>
             <textarea id="typing-text" rows="10" placeholder="Type here..." style="width: 100%;"></textarea>
             <p id="char-count" class="error">Minimum 1200 characters required.</p>
             <button id="submit-btn" class="btn" onclick="submitTypingPage()">Submit</button>
-        </div>
-
-        <!-- Clock In/Out Section -->
-        <div id="clock-section" style="display:none;" class="card">
-            <h2 id="user-greeting"></h2>
-            <p id="current-time"></p>
-            <button id="clock-in-btn" class="arrow-btn logged-out" onclick="clockIn()">&#x2191; Clock In</button>
-            <button id="clock-out-btn" class="arrow-btn logged-in" onclick="clockOut()" style="display:none;">&#x2193; Clock Out</button>
-            <button id="logout-btn" class="btn" onclick="logout()">Log Out</button>
         </div>
     </div>
 
@@ -138,23 +111,12 @@
             'IanZLexO': 'LexO2024Ian',
             'The CEO': 'LexOCEO2024',
             'LexBOCEO': 'LexOCEO2024',
-            'MaxFLexO': 'MaxLexO2024'
+            'MaxFLexO': 'MaxLexO2024',
+            'ReggieOLexO': 'RO123456'
         };
 
         let loggedInUser = null;
 
-        // Check if the user is already logged in (in localStorage)
-        function checkUserStatus() {
-            const user = localStorage.getItem('user');
-            if (user) {
-                loggedInUser = user;
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('clock-section').style.display = 'block';
-                showCurrentTime(); // Show current time based on the user's time zone
-            }
-        }
-
-        // Login Function
         function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
@@ -162,7 +124,6 @@
             
             if (users[username] === password) {
                 loggedInUser = username;
-                localStorage.setItem('user', loggedInUser);
                 errorMessage.innerText = '';
                 document.getElementById('login-section').style.display = 'none';
                 document.getElementById('typing-page').style.display = 'block';
@@ -171,60 +132,17 @@
             }
         }
 
-        // Submit Typing Page
         function submitTypingPage() {
             const text = document.getElementById('typing-text').value;
             if (text.length >= 1200) {
-                // Redirect to Clock In/Out page and show current time
-                window.location.href = '#clock-section'; // Just scroll to clock section (same page for now)
+                alert('Typing page submitted successfully!');
+                window.location.href = 'clock-in-out.html'; // Redirect to the clock-in/out system
             } else {
                 document.getElementById('char-count').innerText = 'Minimum 1200 characters required.';
             }
         }
-
-        // Clock In
-        function clockIn() {
-            localStorage.setItem(loggedInUser, 'in');
-            updateClockButtons();
-        }
-
-        // Clock Out
-        function clockOut() {
-            localStorage.setItem(loggedInUser, 'out');
-            updateClockButtons();
-        }
-
-        // Log Out Function
-        function logout() {
-            localStorage.removeItem('user');
-            loggedInUser = null;
-            document.getElementById('login-section').style.display = 'block';
-            document.getElementById('clock-section').style.display = 'none';
-        }
-
-        // Update Clock In/Out Buttons
-        function updateClockButtons() {
-            if (localStorage.getItem(loggedInUser) === 'in') {
-                document.getElementById('clock-in-btn').style.display = 'none';
-                document.getElementById('clock-out-btn').style.display = 'block';
-                document.getElementById('user-greeting').innerText = `Welcome, ${loggedInUser}!`;
-            } else {
-                document.getElementById('clock-in-btn').style.display = 'block';
-                document.getElementById('clock-out-btn').style.display = 'none';
-                document.getElementById('user-greeting').innerText = `Goodbye, ${loggedInUser}!`;
-            }
-        }
-
-        // Display Current Time based on Time Zone
-        function showCurrentTime() {
-            const currentTime = new Date();
-            const timeZoneOffset = currentTime.getTimezoneOffset() * 60000;
-            const localTime = new Date(currentTime.getTime() - timeZoneOffset);
-            document.getElementById('current-time').innerText = `Current Time: ${localTime.toLocaleString()}`;
-        }
-
-        checkUserStatus();
     </script>
 
 </body>
 </html>
+
