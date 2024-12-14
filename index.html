@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Celsius. Clock In/Out System</title>
+    <title>Employee Management System</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,8 +23,8 @@
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 900px;
+            margin: 30px auto;
             padding: 20px;
         }
 
@@ -64,85 +64,174 @@
             background-color: #45a049;
         }
 
-        .error {
-            color: red;
-            font-size: 16px;
-            font-weight: bold;
+        .table-container {
+            overflow-x: auto;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #2d3e50;
+            color: white;
+        }
+
+        .message-box {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        Celsius, LexO Inc. Employee Portal
+        Employee Clock In/Out System
     </div>
 
     <div class="container">
         <!-- Login Section -->
         <div id="login-section" class="card">
-            <h2 class="header">Login to LexO Inc. Portal</h2>
-            <p id="error-message" class="error"></p>
-
+            <h2>Login</h2>
             <div class="form-group">
-                <input type="text" id="username" placeholder="Username" />
+                <input type="text" id="username" placeholder="Username">
             </div>
             <div class="form-group">
-                <input type="password" id="password" placeholder="Password" />
+                <input type="password" id="password" placeholder="Password">
             </div>
             <button class="btn" onclick="login()">Login</button>
         </div>
 
-        <!-- Typing Page -->
-        <div id="typing-page" style="display:none;" class="card">
-            <h2 class="header">Typing Page</h2>
-            <textarea id="typing-text" rows="10" placeholder="Type here..." style="width: 100%;"></textarea>
-            <p id="char-count" class="error">Minimum 1200 characters required.</p>
-            <button id="submit-btn" class="btn" onclick="submitTypingPage()">Submit</button>
+        <!-- Clock In/Out Section -->
+        <div id="employee-section" class="card" style="display: none;">
+            <h2>Welcome, <span id="employee-name"></span></h2>
+            <p>Use the buttons below to clock in or out:</p>
+            <button class="btn" onclick="clockIn()">Clock In</button>
+            <button class="btn" onclick="clockOut()">Clock Out</button>
+
+            <h3>Send a Message to the CEO</h3>
+            <textarea id="message-box" rows="5" placeholder="Write your message here..."></textarea>
+            <button class="btn" onclick="sendMessage()">Send Message</button>
+        </div>
+
+        <!-- CEO Panel -->
+        <div id="ceo-panel" class="card" style="display: none;">
+            <h2>CEO Panel</h2>
+            <h3>Clock-In/Out Records</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Clock In</th>
+                            <th>Clock Out</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clock-records"></tbody>
+                </table>
+            </div>
+
+            <h3>Messages from Employees</h3>
+            <div id="messages"></div>
         </div>
     </div>
 
     <script>
         const users = {
-            'IanZLexO': 'LexO2024Ian',
-            'The CEO': 'LexOCEO2024',
-            'LexBOCEO': 'LexOCEO2024',
-            'MaxFLexO': 'MaxLexO2024',
-            'ReggieOLexO': 'RO123456'
+            'employee1': 'password1',
+            'employee2': 'password2',
+            'The CEO': 'LexOCEO'
         };
 
+        const clockRecords = [];
+        const messages = [];
         let loggedInUser = null;
 
         function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('error-message');
-            
+
             if (users[username] === password) {
                 loggedInUser = username;
-                errorMessage.innerText = '';
                 document.getElementById('login-section').style.display = 'none';
-                document.getElementById('typing-page').style.display = 'block';
+
+                if (username === 'The CEO') {
+                    loadCEOPanel();
+                } else {
+                    document.getElementById('employee-name').innerText = username;
+                    document.getElementById('employee-section').style.display = 'block';
+                }
             } else {
-                errorMessage.innerText = 'Invalid username or password';
+                alert('Invalid username or password!');
             }
         }
 
-        function submitTypingPage() {
-            const text = document.getElementById('typing-text').value;
-            if (text.length >= 1200) {
-                alert('Typing page submitted successfully!');
-                window.location.href = 'clock-in-out.html'; // Redirect to the clock-in/out system
+        function clockIn() {
+            const time = new Date().toLocaleString();
+            clockRecords.push({ user: loggedInUser, clockIn: time, clockOut: null });
+            alert(`Clocked in at ${time}`);
+        }
+
+        function clockOut() {
+            const time = new Date().toLocaleString();
+            const record = clockRecords.find(r => r.user === loggedInUser && !r.clockOut);
+            if (record) {
+                record.clockOut = time;
+                alert(`Clocked out at ${time}`);
             } else {
-                document.getElementById('char-count').innerText = 'Minimum 1200 characters required.';
+                alert('You must clock in first!');
             }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message-box').value;
+            if (message.trim()) {
+                messages.push({ user: loggedInUser, message });
+                alert('Message sent to the CEO!');
+                document.getElementById('message-box').value = '';
+            } else {
+                alert('Message cannot be empty!');
+            }
+        }
+
+        function loadCEOPanel() {
+            document.getElementById('ceo-panel').style.display = 'block';
+            const clockRecordsTable = document.getElementById('clock-records');
+            clockRecordsTable.innerHTML = clockRecords.map(record => `
+                <tr>
+                    <td>${record.user}</td>
+                    <td>${record.clockIn || 'N/A'}</td>
+                    <td>${record.clockOut || 'N/A'}</td>
+                </tr>
+            `).join('');
+
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = messages.map(msg => `
+                <div class="message">
+                    <strong>${msg.user}</strong>: ${msg.message}
+                </div>
+            `).join('');
         }
     </script>
-
 </body>
 </html>
-
