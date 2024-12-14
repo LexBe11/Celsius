@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Chat System</title>
+    <title>Employee Management System</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0; color: #333; }
         .navbar { background-color: #2d3e50; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
@@ -13,271 +13,167 @@
         input[type="text"], input[type="password"], textarea { padding: 10px; width: 100%; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
         .btn { padding: 12px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
         .btn:hover { background-color: #45a049; }
-        .chat-container { margin: 20px 0; }
-        .message { padding: 10px; border-bottom: 1px solid #ddd; }
-        .message:last-child { border-bottom: none; }
+        .message-box { background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .message { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<div class="navbar">
-    Employee Chat System
-</div>
-
-<div class="container">
-    <!-- Login Section -->
-    <div id="login-section" class="card">
-        <h2>Login</h2>
-        <div class="form-group">
-            <input type="text" id="username" placeholder="Username">
-        </div>
-        <div class="form-group">
-            <input type="password" id="password" placeholder="Password">
-        </div>
-        <button class="btn" onclick="login()">Login</button>
-        <button class="btn" onclick="showRegisterSection()">Register</button>
-        <button class="btn" onclick="showForgotPasswordSection()">Forgot Password?</button>
+    <div class="navbar">
+        Employee Management System
     </div>
 
-    <!-- Registration Section -->
-    <div id="register-section" class="card" style="display: none;">
-        <h2>Register</h2>
-        <div class="form-group">
-            <input type="text" id="new-username" placeholder="Username">
+    <div class="container">
+        <!-- Login Section -->
+        <div id="login-section" class="card">
+            <h2>Login</h2>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password">
+            </div>
+            <button class="btn" onclick="login()">Login</button>
         </div>
-        <div class="form-group">
-            <input type="password" id="new-password" placeholder="Password">
+
+        <!-- Employee Section -->
+        <div id="employee-section" class="card" style="display: none;">
+            <h2>Welcome, <span id="employee-name"></span></h2>
+            <p>Use the buttons below to clock in or out:</p>
+            <button class="btn" onclick="clockIn()">Clock In</button>
+            <button class="btn" onclick="clockOut()">Clock Out</button>
+
+            <h3>Send a Message</h3>
+            <textarea id="message-box" rows="5" placeholder="Write your message here..."></textarea>
+            <button class="btn" onclick="sendMessage()">Send Message</button>
+
+            <div id="chat-container" class="message-box">
+                <h3>Chat Messages</h3>
+                <div id="messages"></div>
+            </div>
         </div>
-        <button class="btn" onclick="register()">Register</button>
-        <button class="btn" onclick="showLoginSection()">Back to Login</button>
     </div>
 
-    <!-- Forgot Password Section -->
-    <div id="forgot-password-section" class="card" style="display: none;">
-        <h2>Forgot Password</h2>
-        <div class="form-group">
-            <input type="text" id="forgot-username" placeholder="Username">
-        </div>
-        <button class="btn" onclick="resetPassword()">Reset Password</button>
-        <button class="btn" onclick="showLoginSection()">Back to Login</button>
-    </div>
+    <script>
+        // Existing users and credentials
+        const users = {
+            'IanZLexO': 'LexO2024Ian',
+            'The CEO': 'LexOCEO',
+            'LexBOCEO': 'LexOCEO2024',
+            'MaxFLexO': 'MaxLexO2024',
+            'ReggieOLexO': 'RO123456'
+        };
 
-    <!-- Employee Section -->
-    <div id="employee-section" class="card" style="display: none;">
-        <h2>Welcome, <span id="employee-name"></span></h2>
-        <button class="btn" onclick="toggleClockInOut()">Clock In/Out</button>
-        <h3>Send a Message</h3>
-        <textarea id="message-box" rows="5" placeholder="Write your message here..."></textarea>
-        <button class="btn" onclick="sendMessage()">Send Message</button>
+        // Existing clock-in/out data
+        const clockRecords = [
+            { user: 'IanZLexO', clockIn: '2024-12-10 08:30:00', clockOut: '2024-12-10 17:00:00' },
+            { user: 'MaxFLexO', clockIn: '2024-12-11 09:00:00', clockOut: '2024-12-11 18:00:00' },
+            { user: 'ReggieOLexO', clockIn: '2024-12-12 08:45:00', clockOut: '2024-12-12 17:30:00' }
+        ];
 
-        <h3>Chat</h3>
-        <div class="chat-container" id="chat-container"></div>
-    </div>
+        // Existing messages
+        const chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
 
-    <!-- CEO Panel -->
-    <div id="ceo-panel" class="card" style="display: none;">
-        <h2>CEO Panel</h2>
-        <h3>Employee Payroll</h3>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>Salary (R$)</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="payroll-list"></tbody>
-            </table>
-        </div>
+        let loggedInUser = null;
 
-        <button class="btn" onclick="showSalaryChanger()">Change Salary</button>
-    </div>
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-    <!-- Salary Changer Section -->
-    <div id="salary-changer-section" class="card" style="display: none;">
-        <h2>Change Salary</h2>
-        <div class="form-group">
-            <select id="salary-employee">
-                <option value="" disabled selected>Select an Employee</option>
-                <!-- Options will be populated dynamically -->
-            </select>
-        </div>
-        <div class="form-group">
-            <input type="number" id="new-salary" placeholder="New Salary (R$)">
-        </div>
-        <button class="btn" onclick="changeSalary()">Change Salary</button>
-        <button class="btn" onclick="showCeoPanel()">Back to CEO Panel</button>
-    </div>
-</div>
+            if (users[username] === password) {
+                loggedInUser = username;
 
-<script>
-    const users = {
-        'IanZLexO': 'LexO2024Ian',
-        'The CEO': 'LexOCEO',
-        'LexBOCEO': 'LexOCEO2024',
-        'MaxFLexO': 'MaxLexO2024',
-        'ReggieOLexO': 'RO123456'
-    };
-
-    let loggedInUser = null;
-    const payroll = {
-        'IanZLexO': 2000,
-        'The CEO': 5000,
-        'LexBOCEO': 4500,
-        'MaxFLexO': 3500,
-        'ReggieOLexO': 3000
-    };
-
-    // Load chat messages from local storage
-    function loadChat() {
-        const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
-        const chatContainer = document.getElementById('chat-container');
-        chatContainer.innerHTML = '';
-        messages.forEach(msg => {
-            chatContainer.innerHTML += `<div class="message" id="msg-${msg.id}">
-                <strong>${msg.user}:</strong> ${msg.message}
-                ${loggedInUser === msg.user ? '<button class="btn" onclick="deleteMessage('+ msg.id +')">Delete</button>' : ''}
-            </div>`;
-        });
-    }
-
-    function login() {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        if (users[username] === password) {
-            loggedInUser = username;
-
-            document.getElementById('login-section').style.display = 'none';
-            if (loggedInUser === 'The CEO') {
-                document.getElementById('ceo-panel').style.display = 'block';
-                loadPayroll();  // Load payroll details for CEO
+                if (username === 'The CEO') {
+                    showCeoPanel();
+                } else {
+                    showEmployeeSection(username);
+                }
             } else {
-                document.getElementById('employee-section').style.display = 'block';
-                document.getElementById('employee-name').innerText = username;
-                loadChat();  // Load existing messages
+                alert('Invalid username or password');
             }
-        } else {
-            alert('Invalid username or password');
         }
-    }
 
-    function showRegisterSection() {
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('register-section').style.display = 'block';
-    }
-
-    function register() {
-        const username = document.getElementById('new-username').value;
-        const password = document.getElementById('new-password').value;
-
-        if (username && password) {
-            users[username] = password;
-            showLoginSection();
-            alert('Registration successful. Please log in.');
-        } else {
-            alert('Please fill in both fields.');
-        }
-    }
-
-    function showForgotPasswordSection() {
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('forgot-password-section').style.display = 'block';
-    }
-
-    function resetPassword() {
-        const username = document.getElementById('forgot-username').value;
-
-        if (users[username]) {
-            alert('A password reset link has been sent to the associated email address.');
-            showLoginSection();
-        } else {
-            alert('Username not found.');
-        }
-    }
-
-    function showLoginSection() {
-        document.getElementById('login-section').style.display = 'block';
-        document.getElementById('register-section').style.display = 'none';
-        document.getElementById('forgot-password-section').style.display = 'none';
-    }
-
-    function toggleClockInOut() {
-        // Implement clock-in/out functionality here
-        alert('Clock-in/out functionality not implemented.');
-    }
-
-    function sendMessage() {
-        const messageBox = document.getElementById('message-box');
-        const message = messageBox.value;
-
-        if (message && loggedInUser) {
-            const chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
-            const messageId = chatMessages.length ? chatMessages[chatMessages.length - 1].id + 1 : 1;
-
-            const newMessage = { id: messageId, user: loggedInUser, message: message };
-            chatMessages.push(newMessage);
-            localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
+        function showEmployeeSection(username) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('employee-section').style.display = 'block';
+            document.getElementById('employee-name').innerText = username;
 
             loadChat();
-            messageBox.value = '';
-        } else {
-            alert('Please enter a message.');
         }
-    }
 
-    function deleteMessage(messageId) {
-        const chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
-        const updatedMessages = chatMessages.filter(msg => msg.id !== messageId);
-        localStorage.setItem('chatMessages', JSON.stringify(updatedMessages));
+        function showCeoPanel() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('employee-section').style.display = 'none';
 
-        loadChat();
-    }
-
-    function loadPayroll() {
-        const payrollList = document.getElementById('payroll-list');
-        payrollList.innerHTML = '';
-
-        for (const [employee, salary] of Object.entries(payroll)) {
-            payrollList.innerHTML += `<tr>
-                <td>${employee}</td>
-                <td>${salary}</td>
-                <td><button class="btn" onclick="showSalaryChanger('${employee}')">Change Salary</button></td>
-            </tr>`;
+            loadClockRecords();
+            loadChat();
         }
-    }
 
-    function showSalaryChanger(employee) {
-        document.getElementById('ceo-panel').style.display = 'none';
-        document.getElementById('salary-changer-section').style.display = 'block';
-
-        document.getElementById('salary-employee').value = employee;
-        document.getElementById('new-salary').value = payroll[employee];
-    }
-
-    function changeSalary() {
-        const employee = document.getElementById('salary-employee').value;
-        const newSalary = parseFloat(document.getElementById('new-salary').value);
-
-        if (employee && !isNaN(newSalary)) {
-            payroll[employee] = newSalary;
-            loadPayroll();
-
-            alert('Salary updated successfully.');
-            showCeoPanel();
-        } else {
-            alert('Please select an employee and enter a valid salary.');
+        function clockIn() {
+            const now = new Date().toLocaleString();
+            clockRecords.push({ user: loggedInUser, clockIn: now, clockOut: '' });
+            alert('Clocked in at ' + now);
         }
-    }
 
-    function showCeoPanel() {
-        document.getElementById('salary-changer-section').style.display = 'none';
-        document.getElementById('ceo-panel').style.display = 'block';
-    }
+        function clockOut() {
+            const now = new Date().toLocaleString();
+            const record = clockRecords.find(record => record.user === loggedInUser && !record.clockOut);
 
-</script>
+            if (record) {
+                record.clockOut = now;
+                alert('Clocked out at ' + now);
+            } else {
+                alert('You need to clock in first!');
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message-box').value;
+            if (message.trim()) {
+                const newMessage = { user: loggedInUser, message };
+                chatMessages.push(newMessage);
+                localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
+
+                displayMessage(newMessage);
+                document.getElementById('message-box').value = '';
+            } else {
+                alert('Message cannot be empty');
+            }
+        }
+
+        function loadClockRecords() {
+            const clockRecordsTable = document.getElementById('clock-records');
+            clockRecordsTable.innerHTML = '';
+            clockRecords.forEach(record => {
+                clockRecordsTable.innerHTML += `
+                    <tr>
+                        <td>${record.user}</td>
+                        <td>${record.clockIn}</td>
+                        <td>${record.clockOut}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function loadChat() {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '';
+            chatMessages.forEach(msg => {
+                displayMessage(msg);
+            });
+        }
+
+        function displayMessage(msg) {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML += `
+                <div class="message">
+                    <strong>${msg.user}:</strong> ${msg.message}
+                </div>
+            `;
+        }
+    </script>
 
 </body>
 </html>
+
 
